@@ -1,12 +1,13 @@
 package mutex
 
 import (
+	"mutex"
 	"sync"
 	"testing"
 )
 
 func BenchmarkMutexV1_100(b *testing.B) {
-	mutex := NewMutexV1()
+	mutex := mutex.NewMutexV1()
 	b.SetParallelism(100)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -17,7 +18,29 @@ func BenchmarkMutexV1_100(b *testing.B) {
 }
 
 func BenchmarkMutexV2_100(b *testing.B) {
-	mutex := NewMutexV2()
+	mutex := mutex.NewMutexV2()
+	b.SetParallelism(100)
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			mutex.Lock()
+			mutex.Unlock()
+		}
+	})
+}
+
+func BenchmarkMutexV3_100(b *testing.B) {
+	mutex := mutex.NewMutexV3()
+	b.SetParallelism(100)
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			mutex.Lock()
+			mutex.Unlock()
+		}
+	})
+}
+
+func BenchmarkMutexV4_100(b *testing.B) {
+	mutex := mutex.NewMutexV4()
 	b.SetParallelism(100)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -28,7 +51,7 @@ func BenchmarkMutexV2_100(b *testing.B) {
 }
 
 func BenchmarkSpinLock_100(b *testing.B) {
-	spin := NewSpinLock()
+	spin := mutex.NewSpinLock()
 	b.SetParallelism(100)
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

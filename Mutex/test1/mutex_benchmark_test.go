@@ -1,6 +1,7 @@
 package mutex
 
 import (
+	"mutex"
 	"sync"
 	"testing"
 )
@@ -40,7 +41,7 @@ ok      mutex   70.937s
 */
 
 func BenchmarkMutexV1(b *testing.B) {
-	mutex := NewMutexV1()
+	mutex := mutex.NewMutexV1()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			mutex.Lock()
@@ -50,7 +51,7 @@ func BenchmarkMutexV1(b *testing.B) {
 }
 
 func BenchmarkMutexV2(b *testing.B) {
-	mutex := NewMutexV2()
+	mutex := mutex.NewMutexV2()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			mutex.Lock()
@@ -59,8 +60,29 @@ func BenchmarkMutexV2(b *testing.B) {
 	})
 }
 
+func BenchmarkMutexV3(b *testing.B) {
+	mutex := mutex.NewMutexV3()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			mutex.Lock()
+			mutex.Unlock()
+		}
+	})
+}
+
+func BenchmarkMutexV4(b *testing.B) {
+	mutex := mutex.NewMutexV4()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			mutex.Lock()
+			mutex.Unlock()
+		}
+	})
+
+}
+
 func BenchmarkSpinLock(b *testing.B) {
-	spin := NewSpinLock()
+	spin := mutex.NewSpinLock()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
 			spin.Lock()
@@ -77,54 +99,6 @@ func BenchmarkSyncMutex(b *testing.B) {
 			spin.Lock()
 			//nolint:staticcheck
 			spin.Unlock()
-		}
-	})
-}
-
-func BenchmarkMutexHighConcurrency(b *testing.B) {
-	mutex := NewMutexV1()
-	b.SetParallelism(50000) // 设置并发 Goroutine 数量
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			mutex.Lock()
-
-			// 模拟一个较长时间的任务
-			// time.Sleep(10 * time.Millisecond)
-
-			mutex.Unlock()
-		}
-	})
-}
-
-func BenchmarkSpinLockHighConcurrency(b *testing.B) {
-	mutex := NewSpinLock()
-	b.SetParallelism(50000) // 设置并发 Goroutine 数量
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			mutex.Lock()
-
-			// 模拟一个较长时间的任务
-			// time.Sleep(10 * time.Millisecond)
-
-			mutex.Unlock()
-		}
-	})
-}
-
-func BenchmarkSyncMutexHighConcurrency(b *testing.B) {
-	mutex := sync.Mutex{}
-	b.SetParallelism(50000) // 设置并发 Goroutine 数量
-
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			mutex.Lock()
-
-			// 模拟一个较长时间的任务
-			// time.Sleep(10 * time.Millisecond)
-
-			mutex.Unlock()
 		}
 	})
 }
