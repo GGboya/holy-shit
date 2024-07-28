@@ -7,6 +7,7 @@ import (
 	"leetcode/model"
 	"leetcode/utils"
 	"sort"
+	"sync"
 	"time"
 )
 
@@ -83,10 +84,13 @@ func StartAttendance() (err error) {
 
 	keys := db.Iterator()
 	mu := utils.NewSpinLock()
+	wg := sync.WaitGroup{}
 	for {
 		for i := range keys {
 			// 获取用户的 ID， 根据这个 ID 访问 leetcode
+			wg.Add(1)
 			go func(i int) {
+				defer wg.Done()
 				ID := keys[i]
 				var lastSubmitTime *time.Time
 				var userinfo *model.User
@@ -112,18 +116,29 @@ func StartAttendance() (err error) {
 		}
 	}
 
+	wg.Wait()
+
+	sort.Slice(hard, func(i, j int) bool {
+		return hard[i].Level < hard[j].Level
+	})
+
+	sort.Slice(lazy, func(i, j int) bool {
+		return lazy[i].Level < lazy[j].Level
+	})
+
 	fmt.Println("今日勤奋的同学是")
 	for i := range hard {
 		nickName := config.Lazy[hard[i].Level]
-		fmt.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s\n", i, hard[i].ID, hard[i].QQ, hard[i].QQName, nickName)
+		fmt.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s\n", i+1, hard[i].ID, hard[i].QQ, hard[i].QQName, nickName)
 	}
 	fmt.Println("今日懒惰的同学是")
 	for i := range lazy {
 		level := lazy[i].Level
 		originName := config.Lazy[level]
 		nowName := config.Lazy[min(9, level+1)]
-		fmt.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s --> %s\n", i, lazy[i].ID, lazy[i].QQ, lazy[i].QQName, originName, nowName)
+		fmt.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s --> %s\n", i+1, lazy[i].ID, lazy[i].QQ, lazy[i].QQName, originName, nowName)
+		lazy[i].Level = min(9, level+1)
+		dao.AddUser(&lazy[i])
 	}
-
 	return
 }
