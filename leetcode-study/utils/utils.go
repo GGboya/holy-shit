@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -49,7 +50,7 @@ func SendRequest(payload map[string]interface{}, headers map[string]string) (str
 	return string(body), nil
 }
 
-func FetchLastSubmitTime() (*time.Time, error) {
+func FetchLastSubmitTime(ID string) (*time.Time, error) {
 	payload := map[string]interface{}{
 		"query": `
 			query recentAcSubmissions($userSlug: String!) {
@@ -65,7 +66,7 @@ func FetchLastSubmitTime() (*time.Time, error) {
 			}
 		`,
 		"variables": map[string]string{
-			"userSlug": config.UserSlug,
+			"userSlug": ID,
 		},
 	}
 
@@ -86,4 +87,28 @@ func FetchLastSubmitTime() (*time.Time, error) {
 
 	lastSubmitTime := time.Unix(lastTime, 0)
 	return &lastSubmitTime, nil
+}
+
+func ExtractUserFromURL(url string) (string, error) {
+	// 正则表达式模式：匹配以/u/开头的部分并捕获接下来的非/字符
+	re := regexp.MustCompile(`https://leetcode\.cn/u/([^/]+)/?`)
+
+	// 使用正则表达式查找匹配的部分
+	match := re.FindStringSubmatch(url)
+
+	// 检查是否有匹配的部分
+	if len(match) > 1 {
+		return match[1], nil
+	}
+
+	return "", fmt.Errorf("无法从URL提取用户标识符: %s", url)
+}
+
+func ConvertLevelToInt(level string) int {
+	x, err := strconv.Atoi(level)
+	if err != nil {
+		fmt.Println(err)
+		return -1
+	}
+	return x
 }

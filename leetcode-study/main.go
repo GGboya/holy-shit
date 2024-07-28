@@ -1,63 +1,54 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"leetcode/ggdb"
+	"leetcode/dao"
+	"leetcode/service"
+	"log"
 )
 
 func main() {
-	// lastSubmitTime, err := utils.FetchLastSubmitTime()
-	// if err != nil {
-	// 	fmt.Println("Error fetching last submit time:", err)
-	// 	return
-	// }
 
-	// currentTime := time.Now()
-	// duration := currentTime.Sub(*lastSubmitTime)
-	// fmt.Println("最近提交时间:", lastSubmitTime)
-	// fmt.Println("当前时间:", currentTime)
-	// fmt.Println("时间差:", duration)
-
-	// if duration < 24*time.Hour {
-	// 	fmt.Println("最近一次提交是在24小时内。")
-	// } else {
-	// 	fmt.Println("最近一次提交超过24小时。")
-	// }
-
-	op := ggdb.Options{
-		DataFileSize: 1 << 20,
-		DirPath:      "./data",
-		IndexType:    ggdb.BTree,
-		SyncWrites:   true,
-	}
-	db, err := ggdb.Open(op)
-	if err != nil {
-		fmt.Println("Error opening database:", err)
-		return
+	// Initialize the database
+	if err := dao.Init(); err != nil {
+		log.Fatalf("error initializing database: %v", err)
 	}
 
-	user2 := User{
-		ID:    "selfknow",
-		QQ:    "202572197",
-		Level: 0,
+	// 看用户想执行什么操作？
+	var action int
+	fmt.Println("请输入你想要执行的操作：")
+	fmt.Println("1. 添加用户")
+	fmt.Println("2. 获取用户")
+	fmt.Println("3. 删除用户")
+	fmt.Println("4. 获取所有用户")
+	fmt.Println("5. 开始考勤")
+
+	fmt.Scan(&action)
+	switch action {
+	case 1:
+		err := service.CreateUser()
+		if err != nil {
+			log.Fatalf("error creating user: %v", err)
+		}
+	case 2:
+		err := service.GetUser()
+		if err != nil {
+			log.Fatalf("error getting user: %v", err)
+		}
+	case 3:
+		err := service.DeleteUser()
+		if err != nil {
+			log.Fatalf("error deleting user: %v", err)
+		}
+	case 4:
+		err := service.GetAllUser()
+		if err != nil {
+			log.Fatalf("error deleting user: %v", err)
+		}
+	case 5:
+		err := service.StartAttendance()
+		if err != nil {
+			log.Fatalf("error starting attendance: %v", err)
+		}
 	}
-
-	value, err := json.Marshal(user2)
-	if err != nil {
-		fmt.Println("Error marshaling user:", err)
-		return
-	}
-	db.Put([]byte("selfknow"), value)
-
-	for _, key := range db.Iterator() {
-		fmt.Println(string(key))
-	}
-
-}
-
-type User struct {
-	ID    string `json:"id"`
-	QQ    string `json:"qq"`
-	Level int    `json:"level"`
 }
