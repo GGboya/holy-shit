@@ -119,10 +119,16 @@ func StartAttendance() (err error) {
 	wg.Wait()
 
 	sort.Slice(hard, func(i, j int) bool {
+		if hard[i].Level == hard[j].Level {
+			return i < j 
+		}
 		return hard[i].Level < hard[j].Level
 	})
 
 	sort.Slice(lazy, func(i, j int) bool {
+		if lazy[i].Level == lazy[j].Level {
+			return i < j 
+		}
 		return lazy[i].Level < lazy[j].Level
 	})
 
