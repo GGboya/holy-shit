@@ -36,7 +36,7 @@ func GetUser() (err error) {
 	var ID string
 	fmt.Scan(&ID)
 	user, err := dao.GetUserByID(ID)
-	fmt.Printf("ID: %s, QQ: %s, QQName: %s, Level: %d\n", user.ID, user.QQ, user.QQName, user.Level)
+	fmt.Printf("ID: %s, QQ: %s, QQName: %s, Level: %s\n", user.ID, user.QQ, user.QQName, config.Lazy[user.Level])
 	return err
 }
 
@@ -47,7 +47,7 @@ func GetAllUser() (err error) {
 
 	userinfos := []*model.User{}
 
-	for _, ID := range db.Iterator() {
+	for _, ID := range keys {
 		var user *model.User
 		user, err = dao.GetUserByID(string(ID))
 		userinfos = append(userinfos, user)
@@ -60,6 +60,21 @@ func GetAllUser() (err error) {
 	for i, user := range userinfos {
 		nickName := config.Lazy[user.Level]
 		fmt.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s\n", i+1, user.ID, user.QQ, user.QQName, nickName)
+	}
+	return
+}
+
+func Reset() (err error) {
+	db := dao.GetDB()
+	keys := db.Iterator()
+	for _, ID := range keys {
+		var user *model.User
+		user, err = dao.GetUserByID(string(ID))
+		if err != nil {
+			return err
+		}
+		user.Level = 0
+		dao.AddUser(user)
 	}
 	return
 }
