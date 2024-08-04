@@ -13,7 +13,7 @@ var dbSecret *ggdb.DB
 func init() {
 	op := ggdb.Options{
 		DataFileSize: 1 << 20,
-		DirPath:      "./data",
+		DirPath:      "./storge/data",
 		IndexType:    ggdb.BTree,
 		SyncWrites:   true,
 	}
@@ -25,7 +25,7 @@ func init() {
 
 	dbSecret, err = ggdb.Open(ggdb.Options{
 		DataFileSize: 1 << 20,
-		DirPath:      "./datasecret",
+		DirPath:      "./storge/datasecret",
 		IndexType:    ggdb.BTree,
 		SyncWrites:   true,
 	})
