@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"leetcode/config" // 替换为实际的路径
+	"leetcode/entities"
 )
 
 func SendRequest(payload map[string]interface{}, headers map[string]string) (string, error) {
@@ -111,4 +112,22 @@ func ConvertLevelToInt(level string) int {
 		return -1
 	}
 	return x
+}
+
+func ConvrtUserFormatByteToNormal(user []byte) (*entities.User, error) {
+	var resp *entities.User
+	err := json.Unmarshal(user, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal user: %v", err)
+	}
+	return resp, nil
+}
+
+func ConvrtUserFormatByteToSecret(user []byte) (*entities.UserSecret, error) {
+	var resp *entities.UserSecret
+	err := json.Unmarshal(user, &resp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal user: %v", err)
+	}
+	return resp, nil
 }

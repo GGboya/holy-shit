@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考勤系统</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>考勤系统</h1>
+        </header>
+        <main>
+            <section id="user-form">
+                <h2>添加用户</h2>
+                <form id="addUserForm">
+                    <label for="id">ID:</label>
+                    <input type="text" id="id" name="id" required>
+                    <label for="qq">QQ:</label>
+                    <input type="text" id="qq" name="qq" required>
+                    <label for="level">等级:</label>
+                    <input type="number" id="nickname" name="level" required>
+                    <label for="qq_name">QQ昵称:</label>
+                    <input type="text" id="qq_name" name="qq_name" required>
+                    <button type="submit">添加用户</button>
+                </form>
+            </section>
+            <section id="user-list">
+                <h2>用户列表</h2>
+                <table id="users">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>QQ</th>
+                            <th>等级</th>
+                            <th>QQ昵称</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 用户数据将由 JavaScript 动态填充 -->
+                    </tbody>
+                </table>
+            </section>
+            <section id="admin-p vanel">
+                <h2>管理员控制面板</h2>
+                <button id="resetUsers">重置用户</button>
+                <button id="startAttendance">开始考勤</button>
+            </section>
+        </main>
+    </div>
+    <script src="/js/app.js"></script>
+</body>
+</html>
