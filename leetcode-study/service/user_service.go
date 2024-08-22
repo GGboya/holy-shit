@@ -6,9 +6,14 @@ import (
 	"leetcode/dao"
 	"leetcode/model"
 	"leetcode/utils"
+	"log"
+	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
+
+	"gopkg.in/gomail.v2"
 )
 
 func CreateUser() (err error) {
@@ -20,9 +25,10 @@ func CreateUser() (err error) {
 	fmt.Scan(&QQ)
 	fmt.Print("QQName: ")
 	fmt.Scan(&QQName)
+	qq := strings.TrimSpace(QQ)
 	user := &model.User{
 		ID:     ID,
-		QQ:     QQ,
+		QQ:     qq,
 		QQName: QQName,
 	}
 	if err = dao.AddUser(user); err != nil {
@@ -135,23 +141,36 @@ func StartAttendance() (err error) {
 
 	sort.Slice(hard, func(i, j int) bool {
 		if hard[i].Level == hard[j].Level {
-			return i < j 
+			return i < j
 		}
 		return hard[i].Level < hard[j].Level
 	})
 
 	sort.Slice(lazy, func(i, j int) bool {
 		if lazy[i].Level == lazy[j].Level {
-			return i < j 
+			return i < j
 		}
 		return lazy[i].Level < lazy[j].Level
 	})
+	god := []string{}
+	type msg struct {
+		qq, title, content string
+	}
+	msgs := []msg{}
 
 	fmt.Println("今日勤奋的同学是")
 	for i := range hard {
 		nickName := config.Lazy[hard[i].Level]
 		fmt.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s\n", i+1, hard[i].ID, hard[i].QQ, hard[i].QQName, nickName)
+		content := fmt.Sprintf("你的称号没有变化， 仍旧是 %s, 请继续努力", nickName)
+		title := "恭喜你，完成考勤！！！"
+		msgs = append(msgs, msg{
+			qq:      hard[i].QQ,
+			title:   title,
+			content: content,
+		})
 	}
+
 	fmt.Println("今日懒惰的同学是")
 	for i := range lazy {
 		level := lazy[i].Level
@@ -160,6 +179,70 @@ func StartAttendance() (err error) {
 		fmt.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s --> %s\n", i+1, lazy[i].ID, lazy[i].QQ, lazy[i].QQName, originName, nowName)
 		lazy[i].Level = min(9, level+1)
 		dao.AddUser(&lazy[i])
+		content := fmt.Sprintf("你的称号由 %s 变为 %s, 请继续努力", originName, nowName)
+		title := "你今天没有刷题哦， 请再接再厉"
+		msgs = append(msgs, msg{
+			qq:      lazy[i].QQ,
+			title:   title,
+			content: content,
+		})
+		if level == 9 {
+			god = append(god, lazy[i].QQ)
+		}
+	}
+
+	wg = sync.WaitGroup{}
+	for i := range msgs {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			SendEmail(msgs[i].qq, msgs[i].title, msgs[i].content)
+		}(i)
+	}
+
+	wg.Wait()
+
+	if len(god) != 0 {
+		content := strings.Join(god, "\n")
+		title := "有同学要飞升了，请手动处理邮件内容中的同学"
+		SendEmail(os.Getenv("QQ"), title, content)
 	}
 	return
+}
+
+func SendEmail(qq, title, content string) error {
+	// 从环境变量中获取邮箱信息
+	qqEmail := os.Getenv("QQ_EMAIL")
+	qqAuthCode := os.Getenv("QQ_AUTH_CODE")
+
+	// 验证环境变量是否加载成功
+	if qqEmail == "" || qqAuthCode == "" {
+		log.Fatal("QQ_EMAIL or QQ_AUTH_CODE is not set in .env file")
+	}
+
+	m := gomail.NewMessage()
+
+	// 发件人
+	m.SetHeader("From", qqEmail)
+
+	// 收件人
+	m.SetHeader("To", qq+"@qq.com")
+
+	// 邮件标题
+	m.SetHeader("Subject", title)
+
+	// 邮件内容
+	m.SetBody("text/plain", content)
+
+	// QQ邮箱SMTP服务器信息
+	d := gomail.NewDialer("smtp.qq.com", 587, qqEmail, qqAuthCode)
+
+	// 发送邮件
+	if err := d.DialAndSend(m); err != nil {
+		log.Fatal(err)
+		return err
+	}
+
+	log.Println("Email sent successfully!")
+	return nil
 }

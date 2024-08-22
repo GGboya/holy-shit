@@ -5,6 +5,8 @@ import (
 	"leetcode/dao"
 	"leetcode/service"
 	"log"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -12,6 +14,11 @@ func main() {
 	// Initialize the database
 	if err := dao.Init(); err != nil {
 		log.Fatalf("error initializing database: %v", err)
+	}
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	// 看用户想执行什么操作？
@@ -58,7 +65,7 @@ func main() {
 			// 重置
 			err := service.Reset()
 			if err != nil {
-				log.Fatal("error resetting database: %v", err)
+				log.Fatalf("error resetting database: %v", err)
 			}
 		case 7:
 			return
