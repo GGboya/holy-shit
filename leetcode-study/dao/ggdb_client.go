@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"leetcode/entities"
 	"leetcode/ggdb"
+	"strings"
 )
 
 // DBClient 结构体用于普通数据库
@@ -30,6 +31,8 @@ func (c *DBClient) GetUserByID(userID string) ([]byte, error) {
 
 // AddUser 将新用户添加到数据库中
 func (c *DBClient) AddUser(user *entities.User) error {
+	qq := strings.TrimSpace(user.QQ)
+	user.QQ = qq
 	value, err := json.Marshal(user)
 	if err != nil {
 		return fmt.Errorf("error marshaling user data: %v", err)

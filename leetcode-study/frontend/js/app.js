@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         <td>${user.qq}</td>
                         <td>${user.nickname}</td>
                         <td>${user.qq_name}</td>
-                        <td><button onclick="deleteUser('${user.id}')">删除</button></td>
                     `;
                     userTableBody.appendChild(row);
                 });
@@ -52,18 +51,7 @@ document.addEventListener('DOMContentLoaded', function () {
             .catch(error => console.error('Error adding user:', error));
     });
 
-    // 删除用户
-    window.deleteUser = function (id) {
-        fetch(`/api/users/${id}`, {
-            method: 'DELETE'
-        })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                fetchUsers(); // 重新获取用户列表
-            })
-            .catch(error => console.error('Error deleting user:', error));
-    }
+  
 
     // 重置用户
     resetUsersButton.addEventListener('click', function () {

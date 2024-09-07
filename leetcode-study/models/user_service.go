@@ -7,7 +7,9 @@ import (
 	"leetcode/entities"
 	"leetcode/utils"
 	"log"
+	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -93,39 +95,48 @@ func (s *UserService) StartAttendance() (err error) {
 	mu := utils.NewSpinLock()
 	wg := sync.WaitGroup{}
 	for {
+		var temerr error
 		for i := range keys {
 			// 获取用户的 ID， 根据这个 ID 访问 leetcode
 			wg.Add(1)
 			go func(i int) {
-				defer wg.Done()
-				ID := keys[i]
-				var lastSubmitTime *time.Time
-				var userinfo *entities.User
-				temp, err := s.dbClient.GetUserByID(string(ID))
-				if err != nil {
-					log.Println("Error getting user by ID:", err)
+				if err := func() error {
+					defer wg.Done()
+					ID := keys[i]
+					var lastSubmitTime *time.Time
+					var userinfo *entities.User
+					temp, err := s.dbClient.GetUserByID(string(ID))
+					if err != nil {
+						log.Println("Error getting user by ID:", err)
+						return err
+					}
+					userinfo, err = utils.ConvrtUserFormatByteToNormal(temp)
+					if err != nil {
+						log.Println("Error converting user format byte to normal:", err)
+						return err
+					}
+					lastSubmitTime, err = utils.FetchLastSubmitTime(string(ID))
+					if err != nil {
+						log.Println("Error fetching last submit time:", err)
+						return err
+					}
+					currentTime := time.Now()
+					duration := currentTime.Sub(*lastSubmitTime)
+					mu.Lock()
+					defer mu.Unlock()
+					if duration < 24*time.Hour {
+						hard = append(hard, *userinfo)
+					} else {
+						lazy = append(lazy, *userinfo)
+					}
+					return nil
+				}(); err != nil {
+					temerr = err
 				}
-				userinfo, err = utils.ConvrtUserFormatByteToNormal(temp)
-				if err != nil {
-					log.Println("Error converting user format byte to normal:", err)
-				}
-				lastSubmitTime, err = utils.FetchLastSubmitTime(string(ID))
-				if err != nil {
-					fmt.Println("Error fetching last submit time:", err)
-					return
-				}
-				currentTime := time.Now()
-				duration := currentTime.Sub(*lastSubmitTime)
-				mu.Lock()
-				defer mu.Unlock()
-				if duration < 24*time.Hour {
-					hard = append(hard, *userinfo)
-				} else {
-					lazy = append(lazy, *userinfo)
-				}
+
 			}(i)
 		}
-		if err == nil {
+		if temerr == nil {
 			break
 		}
 	}
@@ -146,10 +157,22 @@ func (s *UserService) StartAttendance() (err error) {
 		return lazy[i].Level < lazy[j].Level
 	})
 
+	type msg struct {
+		qq, title, content string
+	}
+	msgs := []msg{}
+	god := []string{}
 	log.Println("今日勤奋的同学是")
 	for i := range hard {
 		nickName := config.Lazy[hard[i].Level]
-		log.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s\n", i+1, hard[i].ID, hard[i].QQ, hard[i].QQName, nickName)
+		fmt.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s\n", i+1, hard[i].ID, hard[i].QQ, hard[i].QQName, nickName)
+		content := fmt.Sprintf("你的称号没有变化， 仍旧是 %s, 请继续努力", nickName)
+		title := "恭喜你，完成考勤！！！"
+		msgs = append(msgs, msg{
+			qq:      hard[i].QQ,
+			title:   title,
+			content: content,
+		})
 	}
 	log.Println("今日懒惰的同学是")
 	for i := range lazy {
@@ -159,6 +182,34 @@ func (s *UserService) StartAttendance() (err error) {
 		log.Printf("%d --- ID: %s, QQ: %s, QQName: %s, Level: %s --> %s\n", i+1, lazy[i].ID, lazy[i].QQ, lazy[i].QQName, originName, nowName)
 		lazy[i].Level = min(9, level+1)
 		s.dbClient.AddUser(&lazy[i])
+
+		content := fmt.Sprintf("你的称号由 %s 变为 %s, 请继续努力", originName, nowName)
+		title := "你今天没有刷题哦， 请再接再厉"
+		msgs = append(msgs, msg{
+			qq:      lazy[i].QQ,
+			title:   title,
+			content: content,
+		})
+		if level == 9 {
+			god = append(god, lazy[i].QQ)
+		}
+	}
+
+	wg = sync.WaitGroup{}
+	for i := range msgs {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			utils.SendEmail(msgs[i].qq, msgs[i].title, msgs[i].content)
+		}(i)
+	}
+
+	wg.Wait()
+
+	if len(god) != 0 {
+		content := strings.Join(god, "\n")
+		title := "有同学要飞升了，请手动处理邮件内容中的同学"
+		utils.SendEmail(os.Getenv("QQ"), title, content)
 	}
 	return
 }

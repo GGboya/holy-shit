@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,6 +15,8 @@ import (
 
 	"leetcode/config" // 替换为实际的路径
 	"leetcode/entities"
+
+	"gopkg.in/gomail.v2"
 )
 
 func SendRequest(payload map[string]interface{}, headers map[string]string) (string, error) {
@@ -130,4 +134,40 @@ func ConvrtUserFormatByteToSecret(user []byte) (*entities.UserSecret, error) {
 		return nil, fmt.Errorf("failed to unmarshal user: %v", err)
 	}
 	return resp, nil
+}
+
+func SendEmail(qq, title, content string) error {
+	// 从环境变量中获取邮箱信息
+	qqEmail := os.Getenv("QQ_EMAIL")
+	qqAuthCode := os.Getenv("QQ_AUTH_CODE")
+
+	// 验证环境变量是否加载成功
+	if qqEmail == "" || qqAuthCode == "" {
+		log.Fatal("QQ_EMAIL or QQ_AUTH_CODE is not set in .env file")
+	}
+
+	m := gomail.NewMessage()
+
+	// 发件人
+	m.SetHeader("From", qqEmail)
+
+	// 收件人
+	m.SetHeader("To", qq+"@qq.com")
+
+	// 邮件标题
+	m.SetHeader("Subject", title)
+
+	// 邮件内容
+	m.SetBody("text/plain", content)
+
+	// QQ邮箱SMTP服务器信息
+	d := gomail.NewDialer("smtp.qq.com", 587, qqEmail, qqAuthCode)
+
+	// 发送邮件
+	if err := d.DialAndSend(m); err != nil {
+		return err
+	}
+
+	log.Println("Email sent successfully!")
+	return nil
 }

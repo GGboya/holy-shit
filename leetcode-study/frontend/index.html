@@ -3,53 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>考勤系统</title>
-    <link rel="stylesheet" href="/css/styles.css">
+    <title>用户管理系统</title>
+    <style>
+        /* CSS 样式 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        #user-form, #user-list {
+            width: 60%;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f8f8;
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <header>
-            <h1>考勤系统</h1>
-        </header>
-        <main>
-            <section id="user-form">
-                <h2>添加用户</h2>
-                <form id="addUserForm">
-                    <label for="id">ID:</label>
-                    <input type="text" id="id" name="id" required>
-                    <label for="qq">QQ:</label>
-                    <input type="text" id="qq" name="qq" required>
-                    <label for="level">等级:</label>
-                    <input type="number" id="nickname" name="level" required>
-                    <label for="qq_name">QQ昵称:</label>
-                    <input type="text" id="qq_name" name="qq_name" required>
-                    <button type="submit">添加用户</button>
-                </form>
-            </section>
-            <section id="user-list">
-                <h2>用户列表</h2>
-                <table id="users">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>QQ</th>
-                            <th>等级</th>
-                            <th>QQ昵称</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- 用户数据将由 JavaScript 动态填充 -->
-                    </tbody>
-                </table>
-            </section>
-            <section id="admin-p vanel">
-                <h2>管理员控制面板</h2>
-                <button id="resetUsers">重置用户</button>
-                <button id="startAttendance">开始考勤</button>
-            </section>
-        </main>
+
+    <h1>用户管理系统</h1>
+
+    <!-- 添加用户表单 -->
+    <div id="user-form">
+        <h2>添加用户</h2>
+        <form id="addUserForm">
+            <label for="id">ID:</label>
+            <input type="text" id="id" name="id" required>
+
+            <label for="qq">QQ:</label>
+            <input type="text" id="qq" name="qq" required>
+
+            
+
+            <label for="qq_name">QQ昵称:</label>
+            <input type="text" id="qq_name" name="qq_name" required>
+
+            <button type="submit">添加用户</button>
+        </form>
     </div>
-    <script src="/js/app.js"></script>
+
+    <!-- 用户列表 -->
+    <div id="user-list">
+        <h2>用户列表</h2>
+        <table id="users">
+            <thead>
+                <tr>
+                    <th>序号</th>
+                    <th>ID</th>
+                    <th>QQ</th>
+                    <th>等级</th>
+                    <th>QQ昵称</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- 用户数据将由 JavaScript 动态填充 -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // JavaScript 代码
+        document.addEventListener('DOMContentLoaded', function () {
+            const addUserForm = document.getElementById('addUserForm');
+            const userTableBody = document.querySelector('#users tbody');
+
+            // 获取用户列表
+            function fetchUsers() {
+                fetch('/api/users')
+                    .then(response => response.json())
+                    .then(data => {
+                        userTableBody.innerHTML = ''; // 清空表格
+                        data.forEach((user, index) => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${index + 1}</td> <!-- 序号 -->
+                                <td>${user.id}</td>
+                                <td>${user.qq}</td>
+                                <td>${user.nickname}</td>
+                                <td>${user.qq_name}</td>
+                            `;
+                            userTableBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching users:', error));
+            }
+
+            // 添加用户
+            addUserForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(addUserForm);
+                const userData = {
+                    id: formData.get('id'),
+                    qq: formData.get('qq'),
+                    level: parseInt(formData.get('nickname')),
+                    qq_name: formData.get('qq_name')
+                };
+
+                fetch('/api/users', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        addUserForm.reset();
+                        fetchUsers(); // 重新获取用户列表
+                    })
+                    .catch(error => console.error('Error adding user:', error));
+            });
+
+            // 初始获取用户列表
+            fetchUsers();
+        });
+    </script>
+
 </body>
 </html>

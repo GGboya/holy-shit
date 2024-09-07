@@ -14,6 +14,9 @@ func SetupRoutes() *gin.Engine {
 	// dbSecretClinet := dao.NewSecretDB()
 	// 初始化控制器
 	userController := controllers.NewUserControllers(dbClient)
+	go userController.StartDailyJob()
+
+	// 写一个定时任务
 	// userSecretController := controllers.NewUserSecretControllers(dbSecretClinet)
 	router := gin.Default()
 
@@ -31,11 +34,7 @@ func SetupRoutes() *gin.Engine {
 		// 用户相关路由
 		api.GET("/users", userController.GetAllUsersHandler)
 		api.POST("/users", userController.AddUserHandler)
-		api.DELETE("/users/:id", userController.DeleteUserHandler)
-
-		// 管理员相关 API
-		api.POST("/reset", userController.ResetHandler)
-		api.POST("/attendance", userController.StartAttendanceHandler)
+		// api.DELETE("/users/:id", userController.DeleteUserHandler)
 	}
 
 	// 加载 HTML 模板
