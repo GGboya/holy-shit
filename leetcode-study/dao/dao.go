@@ -5,6 +5,7 @@ package dao
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"leetcode/ggdb"
 	"leetcode/model"
@@ -17,11 +18,12 @@ var db *ggdb.DB
 func Init() error {
 	op := ggdb.Options{
 		DataFileSize: 1 << 20,
-		DirPath:      "./data",
+		DirPath:      os.Getenv("DIRPATH"),
 		IndexType:    ggdb.BTree,
 		SyncWrites:   true,
 	}
 	var err error
+	fmt.Println(os.Getenv("DIRPATH"))
 	db, err = ggdb.Open(op)
 	if err != nil {
 		return fmt.Errorf("error opening database: %v", err)

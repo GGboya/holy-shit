@@ -11,14 +11,13 @@ import (
 
 func main() {
 
-	// Initialize the database
-	if err := dao.Init(); err != nil {
-		log.Fatalf("error initializing database: %v", err)
-	}
-
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal(err)
+	}
+	// Initialize the database
+	if err := dao.Init(); err != nil {
+		log.Fatalf("error initializing database: %v", err)
 	}
 
 	// 看用户想执行什么操作？
