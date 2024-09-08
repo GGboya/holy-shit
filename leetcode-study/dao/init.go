@@ -4,6 +4,7 @@ package dao
 
 import (
 	"leetcode/ggdb"
+	"os"
 )
 
 var db *ggdb.DB
@@ -13,7 +14,7 @@ var dbSecret *ggdb.DB
 func init() {
 	op := ggdb.Options{
 		DataFileSize: 1 << 20,
-		DirPath:      "./storge/data",
+		DirPath:      os.Getenv("DIRPATH"),
 		IndexType:    ggdb.BTree,
 		SyncWrites:   true,
 	}
